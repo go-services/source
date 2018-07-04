@@ -5,6 +5,8 @@ import (
 	"github.com/go-services/code"
 	"go/ast"
 	"strings"
+	"github.com/go-services/annotation"
+	"fmt"
 )
 
 func parseType(expr ast.Expr, imports []Import) code.Type {
@@ -94,4 +96,33 @@ func parseComments(docs *ast.CommentGroup) (dc []code.Comment) {
 		dc = append(dc, code.NewComment(cleanComment(c.Text)))
 	}
 	return
+}
+
+func annotate(c code.Code, force bool) (*annotation.Annotation, error) {
+	for _, c := range c.Docs() {
+		a, err := annotation.Parse(cleanComment(c.String()))
+		if err != nil && force {
+			return nil, err
+		}
+		return a, nil
+	}
+	return nil, nil
+}
+
+// this is used to add code to the body of a code node.
+// e.x to the body of a function, to the fields of a structure to the methods of an interface.
+func appendCodeToInner(src string, node Node, c code.Code) string {
+	pre := strings.TrimRight(src[:node.InnerEnd()], "\n") + "\n"
+	mid := ""
+	lines := strings.Split(c.String(), "\n")
+	for _, l := range lines {
+		mid += "\t" + l + "\n"
+	}
+	end := src[node.InnerEnd():]
+	return fmt.Sprintf(
+		"%s%s%s",
+		pre,
+		mid,
+		end,
+	)
 }

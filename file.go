@@ -7,7 +7,7 @@ import (
 )
 
 type Annotated interface {
-	Annotate() error
+	Annotate(force bool) error
 }
 
 type Node interface {
@@ -90,11 +90,20 @@ type File struct {
 	pkg        string
 	src        string
 	imports    []Import
-	structures []Structure
-	interfaces []Interface
-	functions  []Function
+	structures map[string]Structure
+	interfaces map[string]Interface
+	functions  map[string]Function
 }
 
+func NewFile(pkg,src string) *File {
+	return &File{
+		pkg:pkg,
+		src:src,
+		structures:map[string]Structure{},
+		interfaces:map[string]Interface{},
+		functions:map[string]Function{},
+	}
+}
 func (s *Structure) Name() string {
 	return s.code.Name
 }
@@ -123,15 +132,12 @@ func (s *Structure) Struct() code.Struct {
 	return s.code
 }
 
-func (s *Structure) Annotate() error {
-	for _, c := range s.code.Docs() {
-		a, err := annotation.Parse(cleanComment(c.String()))
-		if err != nil {
-			return err
-		}
+func (s *Structure) Annotate(force bool) error {
+	a, err := annotate(&s.code, force)
+	if a != nil {
 		s.annotations = append(s.annotations, *a)
 	}
-	return nil
+	return err
 }
 
 func (i *Interface) Name() string {
@@ -162,15 +168,12 @@ func (i *Interface) Interface() code.Interface {
 	return i.code
 }
 
-func (i *Interface) Annotate() error {
-	for _, c := range i.code.Docs() {
-		a, err := annotation.Parse(cleanComment(c.String()))
-		if err != nil {
-			return err
-		}
+func (i *Interface) Annotate(force bool) error {
+	a, err := annotate(&i.code, force)
+	if a != nil {
 		i.annotations = append(i.annotations, *a)
 	}
-	return nil
+	return err
 }
 
 func (f *Function) Name() string {
@@ -201,13 +204,10 @@ func (f *Function) Function() code.Function {
 	return f.code
 }
 
-func (f *Function) Annotate() error {
-	for _, c := range f.code.Docs() {
-		a, err := annotation.Parse(cleanComment(c.String()))
-		if err != nil {
-			return err
-		}
+func (f *Function) Annotate(force bool) error {
+	a, err := annotate(&f.code, force)
+	if a != nil {
 		f.annotations = append(f.annotations, *a)
 	}
-	return nil
+	return err
 }

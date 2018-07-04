@@ -1,21 +1,15 @@
 package source
 
 import (
-	"bytes"
 	"github.com/go-errors/errors"
 	"github.com/go-services/code"
 	"go/ast"
 	"go/build"
 	"go/parser"
 	"go/token"
-	"io"
 	"strconv"
 	"strings"
 )
-
-type Parser interface {
-	Parse(src io.Reader) (*File, error)
-}
 
 type fileParser struct {
 	ast  *ast.File
@@ -31,25 +25,14 @@ type interfaceParser struct {
 	imports []Import
 }
 
-func NewParser() Parser {
+func newParser() *fileParser {
 	return &fileParser{}
 }
 
-func (p *fileParser) Parse(src io.Reader) (*File, error) {
-	// get the data
-	var buf bytes.Buffer
-	if _, err := io.Copy(&buf, src); err != nil {
-		return nil, err
-	}
-
-	// store source in file
-	p.file = &File{
-		src: string(buf.Bytes()),
-	}
-
+func (p *fileParser) parse(src string) (*File, error) {
 	// parse the source
 	fSet := token.NewFileSet()
-	astFile, err := parser.ParseFile(fSet, "file.go", p.file.src, parser.ParseComments)
+	astFile, err := parser.ParseFile(fSet, "file.go", src, parser.ParseComments)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +45,8 @@ func (p *fileParser) Parse(src io.Reader) (*File, error) {
 		return nil, errors.New("no package found")
 	}
 
-	p.file.pkg = p.ast.Name.Name
+	// store source in file
+	p.file = NewFile(p.ast.Name.Name, src)
 	p.file.imports = p.parseImports()
 
 	// parse code nodes
@@ -73,7 +57,7 @@ func (p *fileParser) Parse(src io.Reader) (*File, error) {
 			if err != nil {
 				return nil, err
 			}
-			p.file.structures = append(p.file.structures, structure)
+			p.file.structures[structure.Name()] = structure
 		case token.FUNC:
 			function, err := p.parseFunction(d.(*ast.FuncDecl))
 			if err != nil {
@@ -85,13 +69,13 @@ func (p *fileParser) Parse(src io.Reader) (*File, error) {
 			function.code.AddStringBody(strings.TrimSpace(innerBody))
 
 			// add the function
-			p.file.functions = append(p.file.functions, function)
+			p.file.functions[function.Name()] = function
 		case token.INTERFACE:
 			ifc, err := p.parseInterface(d.(*ast.GenDecl))
 			if err != nil {
 				return nil, err
 			}
-			p.file.interfaces = append(p.file.interfaces, ifc)
+			p.file.interfaces[ifc.Name()] = ifc
 		}
 	}
 	return p.file, nil
