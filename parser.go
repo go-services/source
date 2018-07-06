@@ -222,6 +222,8 @@ func (f *functionParser) Parse(d *ast.FuncDecl) (Function, error) {
 		ft.innerBegin = int(d.Body.Lbrace)
 		ft.innerEnd = int(d.Body.Rbrace) - 1
 	}
+	ft.paramBegin = int(d.Type.Params.Opening)
+	ft.paramEnd = int(d.Type.Params.Closing) - 1
 	ft.code = *code.NewFunction(
 		d.Name.Name,
 		code.ParamsFunctionOption(
@@ -231,16 +233,18 @@ func (f *functionParser) Parse(d *ast.FuncDecl) (Function, error) {
 			f.parseParams(d.Type.Results)...,
 		),
 	)
+	ft.exported = ast.IsExported(d.Name.Name)
 	if d.Recv != nil && len(d.Recv.List) > 0 {
 		ft.code.Recv = &f.parseParams(d.Recv)[0]
 	}
-	return ft, nil
+	return ft, ft.Annotate(false)
 }
 func (s *structParser) Parse(d *ast.GenDecl) (Structure, error) {
 	st := Structure{
-		ast:   d,
-		begin: int(d.Pos()) - 1,
-		end:   int(d.End()) - 1,
+		ast:    d,
+		fields: []StructureField{},
+		begin:  int(d.Pos()) - 1,
+		end:    int(d.End()) - 1,
 	}
 
 	// we do not need to test this because it should never come to this point if
@@ -255,15 +259,18 @@ func (s *structParser) Parse(d *ast.GenDecl) (Structure, error) {
 		st.innerEnd = int(fields.Closing) - 1
 	}
 	// create the code representation
+	sf, sfl := s.parseStructureFields(fields)
 	st.code = *code.NewStructWithFields(
 		tp.Name.Name,
-		s.parseStructureFields(fields),
+		sf,
 		parseComments(d.Doc)...,
 	)
-	return st, nil
+	st.exported = ast.IsExported(tp.Name.Name)
+	st.fields = sfl
+	return st, st.Annotate(false)
 }
 func (i *interfaceParser) Parse(d *ast.GenDecl) (Interface, error) {
-	st := Interface{
+	inf := Interface{
 		ast:   d,
 		begin: int(d.Pos()) - 1,
 		end:   int(d.End()) - 1,
@@ -277,21 +284,25 @@ func (i *interfaceParser) Parse(d *ast.GenDecl) (Interface, error) {
 	// get fields if any
 	methods := tp.Type.(*ast.InterfaceType).Methods
 	if methods != nil {
-		st.innerBegin = int(methods.Opening)
-		st.innerEnd = int(methods.Closing) - 1
+		inf.innerBegin = int(methods.Opening)
+		inf.innerEnd = int(methods.Closing) - 1
 	}
 	// create the code representation
-	st.code = *code.NewInterface(
+	im, ims := i.parseInterfaceMethods(methods)
+	inf.code = *code.NewInterface(
 		tp.Name.Name,
-		i.parseInterfaceMethods(methods),
+		im,
 		parseComments(d.Doc)...,
 	)
-	return st, nil
+	inf.exported = ast.IsExported(tp.Name.Name)
+	inf.methods = ims
+	return inf, inf.Annotate(false)
 }
-func (i *interfaceParser) parseInterfaceMethods(methods *ast.FieldList) []code.InterfaceMethod {
+func (i *interfaceParser) parseInterfaceMethods(methods *ast.FieldList) ([]code.InterfaceMethod, []InterfaceMethod) {
 	var list []code.InterfaceMethod
+	var sList []InterfaceMethod
 	if methods == nil {
-		return list
+		return list, sList
 	}
 	for _, f := range methods.List {
 		tp, ok := f.Type.(*ast.FuncType)
@@ -318,15 +329,25 @@ func (i *interfaceParser) parseInterfaceMethods(methods *ast.FieldList) []code.I
 				code.ResultsFunctionOption(mth.code.Results...),
 				code.DocsFunctionOption(parseComments(f.Doc)...),
 			)
+			ims := InterfaceMethod{
+				code:  im,
+				begin: int(f.Pos()) - 1,
+				end:   int(f.End()) - 1,
+			}
+			ims.exported = ast.IsExported(n.Name)
+
+			ims.Annotate(false)
 			list = append(list, im)
+			sList = append(sList, ims)
 		}
 	}
-	return list
+	return list, sList
 }
-func (s *structParser) parseStructureFields(fields *ast.FieldList) []code.StructField {
+func (s *structParser) parseStructureFields(fields *ast.FieldList) ([]code.StructField, []StructureField) {
 	var list []code.StructField
+	var sList []StructureField
 	if fields == nil {
-		return list
+		return list, sList
 	}
 	for _, f := range fields.List {
 		if f == nil {
@@ -335,14 +356,87 @@ func (s *structParser) parseStructureFields(fields *ast.FieldList) []code.Struct
 
 		if len(f.Names) == 0 {
 			sf := code.NewStructField("", parseType(f.Type, s.imports), parseComments(f.Doc)...)
+			if f.Tag != nil && f.Tag.Kind == token.STRING {
+				// remove ` before parsing
+				sf.Tags = parseTags(f.Tag.Value[1 : len(f.Tag.Value)-1])
+			}
 			list = append(list, *sf)
+			stf := StructureField{
+				code:  *sf,
+				begin: int(f.Pos()) - 1,
+				end:   int(f.End()) - 1,
+			}
+			stf.Annotate(false)
+			sList = append(sList, stf)
 			continue
 		}
 		for _, n := range f.Names {
 			sf := code.NewStructField(n.Name, parseType(f.Type, s.imports), parseComments(f.Doc)...)
+			if f.Tag != nil && f.Tag.Kind == token.STRING {
+				// remove ` before parsing
+				sf.Tags = parseTags(f.Tag.Value[1 : len(f.Tag.Value)-1])
+			}
 			list = append(list, *sf)
+			stf := StructureField{
+				code:  *sf,
+				begin: int(f.Pos()) - 1,
+				end:   int(f.End()) - 1,
+			}
+			stf.exported = ast.IsExported(n.Name)
+			stf.Annotate(false)
+			sList = append(sList, stf)
 		}
 	}
-	return list
+	return list, sList
 
+}
+
+// this is copied and modified from https://golang.org/src/reflect/type.go?s=31821:31842#L1174
+func parseTags(tag string) *code.FieldTags {
+	tags := code.FieldTags{}
+	for tag != "" {
+		// Skip leading space.
+		i := 0
+		for i < len(tag) && tag[i] == ' ' {
+			i++
+		}
+		tag = tag[i:]
+		if tag == "" {
+			break
+		}
+
+		// Scan to colon. A space, a quote or a control character is a syntax error.
+		// Strictly speaking, control chars include the range [0x7f, 0x9f], not just
+		// [0x00, 0x1f], but in practice, we ignore the multi-byte control characters
+		// as it is simpler to inspect the tag's bytes than the tag's runes.
+		i = 0
+		for i < len(tag) && tag[i] > ' ' && tag[i] != ':' && tag[i] != '"' && tag[i] != 0x7f {
+			i++
+		}
+		if i == 0 || i+1 >= len(tag) || tag[i] != ':' || tag[i+1] != '"' {
+			break
+		}
+		name := string(tag[:i])
+		tag = tag[i+1:]
+
+		// Scan quoted string to find value.
+		i = 1
+		for i < len(tag) && tag[i] != '"' {
+			if tag[i] == '\\' {
+				i++
+			}
+			i++
+		}
+		if i >= len(tag) {
+			break
+		}
+		qvalue := string(tag[:i+1])
+		value, err := strconv.Unquote(qvalue)
+		if err != nil {
+			break
+		}
+		tags[name] = value
+		tag = tag[i+1:]
+	}
+	return &tags
 }

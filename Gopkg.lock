@@ -3,7 +3,10 @@
 
 [[projects]]
   name = "github.com/alecthomas/participle"
-  packages = [".","lexer"]
+  packages = [
+    ".",
+    "lexer"
+  ]
   revision = "b9f46f081a3528d5f014eff480ff5263a97ff78f"
 
 [[projects]]
@@ -27,8 +30,8 @@
 [[projects]]
   name = "github.com/go-services/code"
   packages = ["."]
-  revision = "8d60edc9c132949cedfd5c1ee2b51e38a2b395d2"
-  version = "v0.1.2"
+  revision = "4d587a95aaa8827116734837c1bf323ca8571c92"
+  version = "v0.1.3"
 
 [[projects]]
   name = "github.com/pkg/errors"
@@ -45,6 +48,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "061a07c3ef79656c96a25b4ae57db15b6fd56f4c21194d1e1f97faa36e0691fc"
+  inputs-digest = "91945942ff02c31c3d352f66628653b8982c085ccf9d8fbe773aed6c62f09719"
   solver-name = "gps-cdcl"
   solver-version = 1

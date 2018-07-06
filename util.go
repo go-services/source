@@ -1,12 +1,12 @@
 package source
 
 import (
+	"fmt"
 	"github.com/dave/jennifer/jen"
+	"github.com/go-services/annotation"
 	"github.com/go-services/code"
 	"go/ast"
 	"strings"
-	"github.com/go-services/annotation"
-	"fmt"
 )
 
 func parseType(expr ast.Expr, imports []Import) code.Type {
@@ -111,7 +111,7 @@ func annotate(c code.Code, force bool) (*annotation.Annotation, error) {
 
 // this is used to add code to the body of a code node.
 // e.x to the body of a function, to the fields of a structure to the methods of an interface.
-func appendCodeToInner(src string, node Node, c code.Code) string {
+func appendCodeToInner(src string, node NodeWithInner, c code.Code) string {
 	pre := strings.TrimRight(src[:node.InnerEnd()], "\n") + "\n"
 	mid := ""
 	lines := strings.Split(c.String(), "\n")
