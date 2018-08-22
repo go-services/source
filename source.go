@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"github.com/go-services/annotation"
 	"github.com/go-services/code"
+	"go/ast"
 	"go/format"
+	"go/token"
+	"strings"
 )
 
 type Source struct {
-	file   *File
+	file   *file
 	parser *fileParser
 }
 
@@ -30,12 +33,7 @@ func (s *Source) AppendFieldToStruct(name string, field *code.StructField) error
 		return err
 	}
 	s.file.src = appendCodeToInner(s.file.src, structure, field)
-	f, err := s.parser.parse(s.file.src)
-	if err != nil {
-		return err
-	}
-	s.file = f
-	return nil
+	return s.parseAgain()
 }
 
 func (s *Source) AppendMethodToInterface(name string, method *code.InterfaceMethod) error {
@@ -44,12 +42,40 @@ func (s *Source) AppendMethodToInterface(name string, method *code.InterfaceMeth
 		return err
 	}
 	s.file.src = appendCodeToInner(s.file.src, inf, method)
-	f, err := s.parser.parse(s.file.src)
-	if err != nil {
-		return err
+	return s.parseAgain()
+}
+
+func (s *Source) AppendImport(imp code.Import) error {
+	var importDecl *ast.GenDecl
+	for _, v := range s.file.ast.Decls {
+		if dec, ok := v.(*ast.GenDecl); ok && dec.Tok == token.IMPORT {
+			importDecl = dec
+		}
 	}
-	s.file = f
-	return nil
+	if importDecl == nil {
+		pre := strings.TrimRight(s.file.src[:s.file.ast.Name.End()-1], "\n") + "\n"
+		mid := fmt.Sprintf(`import %s "%s"`, imp.Alias, imp.Path)
+		end := s.file.src[s.file.ast.Name.End()-1:]
+		s.file.src = fmt.Sprintf("%s%s%s", pre, mid, end)
+		return s.parseAgain()
+	}
+	if importDecl.Lparen == token.NoPos {
+		pos := int(importDecl.TokPos) + len(importDecl.Tok.String())
+		pre := s.file.src[:pos] + "(\n"
+		mid := ""
+		end := ")\n" + s.file.src[importDecl.End():]
+		for _, i := range s.file.imports {
+			mid += "\t" + fmt.Sprintf(`%s "%s"`, i.code.Alias, i.code.Path) + "\n"
+		}
+		mid += "\t" + fmt.Sprintf(`%s "%s"`, imp.Alias, imp.Path) + "\n"
+		s.file.src = fmt.Sprintf("%s%s%s", pre, mid, end)
+		return s.parseAgain()
+	}
+	pre := s.file.src[:importDecl.End()-2]
+	mid := "\t" + fmt.Sprintf(`%s "%s"`, imp.Alias, imp.Path) + "\n"
+	end := s.file.src[importDecl.End()-2:]
+	s.file.src = fmt.Sprintf("%s%s%s", pre, mid, end)
+	return s.parseAgain()
 }
 
 func (s *Source) AppendParameterToFunction(name string, param *code.Parameter) error {
@@ -64,12 +90,8 @@ func (s *Source) AppendParameterToFunction(name string, param *code.Parameter) e
 	mid := param.String()
 	end := s.file.src[fn.ParamEnd():]
 	s.file.src = fmt.Sprintf("%s%s%s", pre, mid, end)
-	f, err := s.parser.parse(s.file.src)
-	if err != nil {
-		return err
-	}
-	s.file = f
-	return nil
+	return s.parseAgain()
+
 }
 
 func (s *Source) AppendCodeToFunction(name string, method *code.RawCode) error {
@@ -78,36 +100,25 @@ func (s *Source) AppendCodeToFunction(name string, method *code.RawCode) error {
 		return err
 	}
 	s.file.src = appendCodeToInner(s.file.src, fn, method)
-	f, err := s.parser.parse(s.file.src)
-	if err != nil {
-		return err
-	}
-	s.file = f
-	return nil
+	return s.parseAgain()
 }
 
 func (s *Source) AppendStructure(structure code.Struct) error {
 	s.file.src += "\n" + structure.String()
-	f, err := s.parser.parse(s.file.src)
-	if err != nil {
-		return err
-	}
-	s.file = f
-	return nil
+	return s.parseAgain()
 }
 
 func (s *Source) AppendInterface(inf code.Interface) error {
 	s.file.src += "\n" + inf.String()
-	f, err := s.parser.parse(s.file.src)
-	if err != nil {
-		return err
-	}
-	s.file = f
-	return nil
+	return s.parseAgain()
 }
 
 func (s *Source) AppendFunction(fn code.Function) error {
 	s.file.src += "\n" + fn.String()
+	return s.parseAgain()
+}
+
+func (s *Source) parseAgain() error {
 	f, err := s.parser.parse(s.file.src)
 	if err != nil {
 		return err

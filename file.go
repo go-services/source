@@ -134,20 +134,22 @@ type Function struct {
 	resultBegin, resultEnd int
 }
 
-// File represents a parsed file.
-type File struct {
+// file represents a parsed file.
+type file struct {
 	pkg        string
 	src        string
+	ast        *ast.File
 	imports    []Import
 	structures map[string]Structure
 	interfaces map[string]Interface
 	functions  map[string]Function
 }
 
-func NewFile(pkg, src string) *File {
-	return &File{
+func newFile(pkg, src string, ast *ast.File) *file {
+	return &file{
 		pkg:        pkg,
 		src:        src,
+		ast:        ast,
 		structures: map[string]Structure{},
 		interfaces: map[string]Interface{},
 		functions:  map[string]Function{},

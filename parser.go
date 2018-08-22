@@ -13,7 +13,7 @@ import (
 
 type fileParser struct {
 	ast  *ast.File
-	file *File
+	file *file
 }
 type structParser struct {
 	imports []Import
@@ -29,7 +29,7 @@ func newParser() *fileParser {
 	return &fileParser{}
 }
 
-func (p *fileParser) parse(src string) (*File, error) {
+func (p *fileParser) parse(src string) (*file, error) {
 	// parse the source
 	fSet := token.NewFileSet()
 	astFile, err := parser.ParseFile(fSet, "file.go", src, parser.ParseComments)
@@ -46,7 +46,7 @@ func (p *fileParser) parse(src string) (*File, error) {
 	}
 
 	// store source in file
-	p.file = NewFile(p.ast.Name.Name, src)
+	p.file = newFile(p.ast.Name.Name, src, p.ast)
 	p.file.imports = p.parseImports()
 
 	// parse code nodes
