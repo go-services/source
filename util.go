@@ -98,15 +98,19 @@ func parseComments(docs *ast.CommentGroup) (dc []code.Comment) {
 	return
 }
 
-func annotate(c code.Code, force bool) (*annotation.Annotation, error) {
+func annotate(c code.Code, force bool) ([]annotation.Annotation, error) {
+	var annotations []annotation.Annotation
 	for _, c := range c.Docs() {
 		a, err := annotation.Parse(cleanComment(c.String()))
-		if err != nil && force {
-			return nil, err
+		if err != nil {
+			if force {
+				return nil, err
+			}
+			continue
 		}
-		return a, nil
+		annotations = append(annotations, *a)
 	}
-	return nil, nil
+	return annotations, nil
 }
 
 // this is used to add code to the body of a code node.

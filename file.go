@@ -192,9 +192,7 @@ func (s *Structure) Annotations() []annotation.Annotation {
 
 func (s *Structure) Annotate(force bool) error {
 	a, err := annotate(&s.code, force)
-	if a != nil {
-		s.annotations = append(s.annotations, *a)
-	}
+	s.annotations = append(s.annotations, a...)
 	return err
 }
 func (s *Structure) Exported() bool {
@@ -239,9 +237,7 @@ func (i *Interface) Annotations() []annotation.Annotation {
 
 func (i *Interface) Annotate(force bool) error {
 	a, err := annotate(&i.code, force)
-	if a != nil {
-		i.annotations = append(i.annotations, *a)
-	}
+	i.annotations = append(i.annotations, a...)
 	return err
 }
 func (i *Interface) Exported() bool {
@@ -302,9 +298,7 @@ func (f *Function) Annotations() []annotation.Annotation {
 
 func (f *Function) Annotate(force bool) error {
 	a, err := annotate(&f.code, force)
-	if a != nil {
-		f.annotations = append(f.annotations, *a)
-	}
+	f.annotations = append(f.annotations, a...)
 	return err
 }
 func (f *Function) Exported() bool {
@@ -339,9 +333,7 @@ func (f *StructureField) Annotations() []annotation.Annotation {
 
 func (f *StructureField) Annotate(force bool) error {
 	a, err := annotate(&f.code, force)
-	if a != nil {
-		f.annotations = append(f.annotations, *a)
-	}
+	f.annotations = append(f.annotations, a...)
 	return err
 }
 func (f *StructureField) Exported() bool {
@@ -373,9 +365,7 @@ func (f *InterfaceMethod) Annotations() []annotation.Annotation {
 
 func (f *InterfaceMethod) Annotate(force bool) error {
 	a, err := annotate(&f.code, force)
-	if a != nil {
-		f.annotations = append(f.annotations, *a)
-	}
+	f.annotations = append(f.annotations, a...)
 	return err
 }
 
