@@ -27,6 +27,13 @@ func New(src string) (*Source, error) {
 	}, nil
 }
 
+func (s *Source) Package() string {
+	return s.file.pkg
+}
+func (s *Source) Imports() []Import {
+	return s.file.imports
+}
+
 func (s *Source) AppendFieldToStruct(name string, field *code.StructField) error {
 	structure, err := s.GetStructure(name)
 	if err != nil {
