@@ -172,8 +172,8 @@ func (s *Source) Interfaces() (interfaces []Interface) {
 	return
 }
 
-func (s *Source) Functions() (functions []Interface) {
-	for _, v := range s.file.interfaces {
+func (s *Source) Functions() (functions []Function) {
+	for _, v := range s.file.functions {
 		functions = append(functions, v)
 	}
 	return
