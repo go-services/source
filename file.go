@@ -6,10 +6,6 @@ import (
 	"go/ast"
 )
 
-type Annotated interface {
-	Annotate(force bool) error
-	Annotations(force bool) error
-}
 
 type Node interface {
 	Exported() bool
