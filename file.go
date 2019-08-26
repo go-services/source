@@ -175,7 +175,7 @@ func (s *Structure) InnerEnd() int {
 	return s.innerEnd
 }
 
-func (s *Structure) Code() code.Code {
+func (s *Structure) Code() *code.Struct {
 	return &s.code
 }
 
@@ -219,7 +219,7 @@ func (i *Interface) InnerEnd() int {
 	return i.innerEnd
 }
 
-func (i *Interface) Code() code.Code {
+func (i *Interface) Code() *code.Interface {
 	return &i.code
 }
 
@@ -272,7 +272,7 @@ func (f *Function) ParamEnd() int {
 	return f.paramEnd
 }
 
-func (f *Function) Code() code.Code {
+func (f *Function) Code() *code.Function {
 	return &f.code
 }
 
@@ -313,7 +313,7 @@ func (f *StructureField) String() string {
 	return f.code.String()
 }
 
-func (f *StructureField) Code() code.Code {
+func (f *StructureField) Code() *code.StructField {
 	return &f.code
 }
 func (f *StructureField) Tags() map[string]string {
@@ -347,7 +347,7 @@ func (f *InterfaceMethod) String() string {
 	return f.code.String()
 }
 
-func (f *InterfaceMethod) Code() code.Code {
+func (f *InterfaceMethod) Code() *code.InterfaceMethod {
 	return &f.code
 }
 
