@@ -6,7 +6,6 @@ import (
 	"go/ast"
 )
 
-
 type Node interface {
 	Exported() bool
 	Code() code.Code
@@ -171,7 +170,11 @@ func (s *Structure) InnerEnd() int {
 	return s.innerEnd
 }
 
-func (s *Structure) Code() *code.Struct {
+func (s *Structure) Code() code.Code {
+	return &s.code
+}
+
+func (s *Structure) Struct() *code.Struct {
 	return &s.code
 }
 
@@ -215,7 +218,11 @@ func (i *Interface) InnerEnd() int {
 	return i.innerEnd
 }
 
-func (i *Interface) Code() *code.Interface {
+func (i *Interface) Code() code.Code {
+	return &i.code
+}
+
+func (i *Interface) Interface() *code.Interface {
 	return &i.code
 }
 
@@ -268,7 +275,11 @@ func (f *Function) ParamEnd() int {
 	return f.paramEnd
 }
 
-func (f *Function) Code() *code.Function {
+func (f *Function) Code() code.Code {
+	return &f.code
+}
+
+func (f *Function) Func() *code.Function {
 	return &f.code
 }
 
@@ -309,7 +320,11 @@ func (f *StructureField) String() string {
 	return f.code.String()
 }
 
-func (f *StructureField) Code() *code.StructField {
+func (f *StructureField) Code() code.Code {
+	return &f.code
+}
+
+func (f *StructureField) Field() *code.StructField {
 	return &f.code
 }
 func (f *StructureField) Tags() map[string]string {
@@ -343,7 +358,11 @@ func (f *InterfaceMethod) String() string {
 	return f.code.String()
 }
 
-func (f *InterfaceMethod) Code() *code.InterfaceMethod {
+func (f *InterfaceMethod) Code() code.Code {
+	return &f.code
+}
+
+func (f *InterfaceMethod) InterfaceMethod() *code.InterfaceMethod {
 	return &f.code
 }
 
