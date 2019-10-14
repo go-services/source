@@ -239,7 +239,7 @@ func (i Interface) Annotations() []annotation.Annotation {
 	return i.annotations
 }
 
-func (i Interface) Annotate(force bool) error {
+func (i *Interface) Annotate(force bool) error {
 	a, err := annotate(&i.code, force)
 	i.annotations = append(i.annotations, a...)
 	return err
