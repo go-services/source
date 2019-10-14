@@ -2,12 +2,13 @@ package source
 
 import (
 	"fmt"
-	"github.com/go-services/annotation"
-	"github.com/go-services/code"
 	"go/ast"
 	"go/format"
 	"go/token"
 	"strings"
+
+	"github.com/go-services/annotation"
+	"github.com/go-services/code"
 )
 
 type Source struct {
@@ -43,12 +44,12 @@ func (s *Source) AppendFieldToStruct(name string, field *code.StructField) error
 	return s.parseAgain()
 }
 
-func (s *Source) AppendMethodToInterface(name string, method *code.InterfaceMethod) error {
+func (s *Source) AppendMethodToInterface(name string, method code.InterfaceMethod) error {
 	inf, err := s.GetInterface(name)
 	if err != nil {
 		return err
 	}
-	s.file.src = appendCodeToInner(s.file.src, inf, method)
+	s.file.src = appendCodeToInner(s.file.src, inf, &method)
 	return s.parseAgain()
 }
 

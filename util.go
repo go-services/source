@@ -2,11 +2,12 @@ package source
 
 import (
 	"fmt"
+	"go/ast"
+	"strings"
+
 	"github.com/dave/jennifer/jen"
 	"github.com/go-services/annotation"
 	"github.com/go-services/code"
-	"go/ast"
-	"strings"
 )
 
 func parseType(expr ast.Expr, imports []Import) code.Type {
@@ -43,6 +44,15 @@ func parseType(expr ast.Expr, imports []Import) code.Type {
 		tp = parseType(t.X, imports)
 		if tp.RawType == nil {
 			tp.Pointer = true
+			return tp
+		}
+		tp.RawType = &jen.Statement{}
+		parseComplexType(expr, tp.RawType)
+		return tp
+	case *ast.ArrayType:
+		tp = parseType(t.Elt, imports)
+		if tp.RawType == nil {
+			tp.ArrayType = true
 			return tp
 		}
 		tp.RawType = &jen.Statement{}

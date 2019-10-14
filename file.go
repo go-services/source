@@ -1,9 +1,10 @@
 package source
 
 import (
+	"go/ast"
+
 	"github.com/go-services/annotation"
 	"github.com/go-services/code"
-	"go/ast"
 )
 
 type Node interface {
@@ -150,42 +151,42 @@ func newFile(pkg, src string, ast *ast.File) *file {
 		functions:  map[string]Function{},
 	}
 }
-func (s *Structure) Name() string {
+func (s Structure) Name() string {
 	return s.code.Name
 }
 
-func (s *Structure) Begin() int {
+func (s Structure) Begin() int {
 	return s.begin
 }
 
-func (s *Structure) End() int {
+func (s Structure) End() int {
 	return s.end
 }
 
-func (s *Structure) InnerBegin() int {
+func (s Structure) InnerBegin() int {
 	return s.innerBegin
 }
 
-func (s *Structure) InnerEnd() int {
+func (s Structure) InnerEnd() int {
 	return s.innerEnd
 }
 
-func (s *Structure) Code() code.Code {
+func (s Structure) Code() code.Code {
 	return &s.code
 }
 
-func (s *Structure) Struct() *code.Struct {
+func (s Structure) Struct() *code.Struct {
 	return &s.code
 }
 
-func (s *Structure) String() string {
+func (s Structure) String() string {
 	return s.code.String()
 }
-func (s *Structure) Fields() []StructureField {
+func (s Structure) Fields() []StructureField {
 	return s.fields
 }
 
-func (s *Structure) Annotations() []annotation.Annotation {
+func (s Structure) Annotations() []annotation.Annotation {
 	return s.annotations
 }
 
@@ -194,112 +195,112 @@ func (s *Structure) Annotate(force bool) error {
 	s.annotations = append(s.annotations, a...)
 	return err
 }
-func (s *Structure) Exported() bool {
+func (s Structure) Exported() bool {
 	return s.exported
 }
 
-func (i *Interface) Name() string {
+func (i Interface) Name() string {
 	return i.code.Name
 }
 
-func (i *Interface) Begin() int {
+func (i Interface) Begin() int {
 	return i.begin
 }
 
-func (i *Interface) End() int {
+func (i Interface) End() int {
 	return i.end
 }
 
-func (i *Interface) InnerBegin() int {
+func (i Interface) InnerBegin() int {
 	return i.innerBegin
 }
 
-func (i *Interface) InnerEnd() int {
+func (i Interface) InnerEnd() int {
 	return i.innerEnd
 }
 
-func (i *Interface) Code() code.Code {
+func (i Interface) Code() code.Code {
 	return &i.code
 }
 
-func (i *Interface) Interface() *code.Interface {
-	return &i.code
+func (i Interface) Interface() code.Interface {
+	return i.code
 }
 
-func (i *Interface) String() string {
+func (i Interface) String() string {
 	return i.code.String()
 }
 
-func (i *Interface) Methods() []InterfaceMethod {
+func (i Interface) Methods() []InterfaceMethod {
 	return i.methods
 }
 
-func (i *Interface) Annotations() []annotation.Annotation {
+func (i Interface) Annotations() []annotation.Annotation {
 	return i.annotations
 }
 
-func (i *Interface) Annotate(force bool) error {
+func (i Interface) Annotate(force bool) error {
 	a, err := annotate(&i.code, force)
 	i.annotations = append(i.annotations, a...)
 	return err
 }
-func (i *Interface) Exported() bool {
+func (i Interface) Exported() bool {
 	return i.exported
 }
 
-func (f *Function) Name() string {
+func (f Function) Name() string {
 	return f.code.Name
 }
 
-func (f *Function) Begin() int {
+func (f Function) Begin() int {
 	return f.begin
 }
 
-func (f *Function) End() int {
+func (f Function) End() int {
 	return f.end
 }
 
-func (f *Function) InnerBegin() int {
+func (f Function) InnerBegin() int {
 	return f.innerBegin
 }
 
-func (f *Function) InnerEnd() int {
+func (f Function) InnerEnd() int {
 	return f.innerEnd
 }
 
-func (f *Function) ParamBegin() int {
+func (f Function) ParamBegin() int {
 	return f.paramBegin
 }
 
-func (f *Function) ParamEnd() int {
+func (f Function) ParamEnd() int {
 	return f.paramEnd
 }
 
-func (f *Function) Code() code.Code {
+func (f Function) Code() code.Code {
 	return &f.code
 }
 
-func (f *Function) Func() *code.Function {
-	return &f.code
+func (f Function) Func() code.Function {
+	return f.code
 }
 
-func (f *Function) String() string {
+func (f Function) String() string {
 	return f.code.String()
 }
 
-func (f *Function) Params() []code.Parameter {
+func (f Function) Params() []code.Parameter {
 	return f.code.Params
 }
 
-func (f *Function) Results() []code.Parameter {
+func (f Function) Results() []code.Parameter {
 	return f.code.Results
 }
 
-func (f *Function) Receiver() *code.Parameter {
+func (f Function) Receiver() *code.Parameter {
 	return f.code.Recv
 }
 
-func (f *Function) Annotations() []annotation.Annotation {
+func (f Function) Annotations() []annotation.Annotation {
 	return f.annotations
 }
 
@@ -308,37 +309,37 @@ func (f *Function) Annotate(force bool) error {
 	f.annotations = append(f.annotations, a...)
 	return err
 }
-func (f *Function) Exported() bool {
+func (f Function) Exported() bool {
 	return f.exported
 }
 
-func (f *StructureField) Name() string {
+func (f StructureField) Name() string {
 	return f.code.Name
 }
 
-func (f *StructureField) String() string {
+func (f StructureField) String() string {
 	return f.code.String()
 }
 
-func (f *StructureField) Code() code.Code {
+func (f StructureField) Code() code.Code {
 	return &f.code
 }
 
-func (f *StructureField) Field() *code.StructField {
-	return &f.code
+func (f StructureField) Field() code.StructField {
+	return f.code
 }
-func (f *StructureField) Tags() map[string]string {
+func (f StructureField) Tags() map[string]string {
 	return *f.code.Tags
 }
 
-func (f *StructureField) Begin() int {
+func (f StructureField) Begin() int {
 	return f.begin
 }
 
-func (f *StructureField) End() int {
+func (f StructureField) End() int {
 	return f.end
 }
-func (f *StructureField) Annotations() []annotation.Annotation {
+func (f StructureField) Annotations() []annotation.Annotation {
 	return f.annotations
 }
 
@@ -347,34 +348,34 @@ func (f *StructureField) Annotate(force bool) error {
 	f.annotations = append(f.annotations, a...)
 	return err
 }
-func (f *StructureField) Exported() bool {
+func (f StructureField) Exported() bool {
 	return f.exported
 }
 
-func (f *InterfaceMethod) Name() string {
+func (f InterfaceMethod) Name() string {
 	return f.code.Name
 }
-func (f *InterfaceMethod) String() string {
+func (f InterfaceMethod) String() string {
 	return f.code.String()
 }
 
-func (f *InterfaceMethod) Code() code.Code {
+func (f InterfaceMethod) Code() code.Code {
 	return &f.code
 }
 
-func (f *InterfaceMethod) InterfaceMethod() *code.InterfaceMethod {
-	return &f.code
+func (f InterfaceMethod) InterfaceMethod() code.InterfaceMethod {
+	return f.code
 }
 
-func (f *InterfaceMethod) Params() []code.Parameter {
+func (f InterfaceMethod) Params() []code.Parameter {
 	return f.code.Params
 }
 
-func (f *InterfaceMethod) Results() []code.Parameter {
+func (f InterfaceMethod) Results() []code.Parameter {
 	return f.code.Results
 }
 
-func (f *InterfaceMethod) Annotations() []annotation.Annotation {
+func (f InterfaceMethod) Annotations() []annotation.Annotation {
 	return f.annotations
 }
 
@@ -384,13 +385,13 @@ func (f *InterfaceMethod) Annotate(force bool) error {
 	return err
 }
 
-func (f *InterfaceMethod) Begin() int {
+func (f InterfaceMethod) Begin() int {
 	return f.begin
 }
 
-func (f *InterfaceMethod) End() int {
+func (f InterfaceMethod) End() int {
 	return f.end
 }
-func (f *InterfaceMethod) Exported() bool {
+func (f InterfaceMethod) Exported() bool {
 	return f.exported
 }

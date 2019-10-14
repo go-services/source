@@ -1,14 +1,17 @@
 package source
 
 import (
-	"github.com/go-errors/errors"
-	"github.com/go-services/code"
 	"go/ast"
 	"go/build"
 	"go/parser"
 	"go/token"
+	"log"
+	"os"
 	"strconv"
 	"strings"
+
+	"github.com/go-errors/errors"
+	"github.com/go-services/code"
 )
 
 type fileParser struct {
@@ -94,8 +97,11 @@ func (p *fileParser) parseImports() (imports []Import) {
 		if err == nil {
 			imp.code.Path = pth
 		}
-
-		pkg, err := build.Import(imp.code.Path, ".", 0)
+		dir, err := os.Getwd()
+		if err != nil {
+			log.Fatal(err)
+		}
+		pkg, err := build.Import(imp.code.Path, dir, 0)
 		if err == nil {
 			imp.code.FilePath = pkg.Dir
 			imp.pkg = pkg.Name
@@ -336,7 +342,7 @@ func (i *interfaceParser) parseInterfaceMethods(methods *ast.FieldList) ([]code.
 			}
 			ims.exported = ast.IsExported(n.Name)
 
-			ims.Annotate(false)
+			_ = ims.Annotate(false)
 			list = append(list, im)
 			sList = append(sList, ims)
 		}
@@ -366,7 +372,7 @@ func (s *structParser) parseStructureFields(fields *ast.FieldList) ([]code.Struc
 				begin: int(f.Pos()) - 1,
 				end:   int(f.End()) - 1,
 			}
-			stf.Annotate(false)
+			_ = stf.Annotate(false)
 			sList = append(sList, stf)
 			continue
 		}
@@ -383,7 +389,7 @@ func (s *structParser) parseStructureFields(fields *ast.FieldList) ([]code.Struc
 				end:   int(f.End()) - 1,
 			}
 			stf.exported = ast.IsExported(n.Name)
-			stf.Annotate(false)
+			_ = stf.Annotate(false)
 			sList = append(sList, stf)
 		}
 	}
@@ -416,7 +422,7 @@ func parseTags(tag string) *code.FieldTags {
 		if i == 0 || i+1 >= len(tag) || tag[i] != ':' || tag[i+1] != '"' {
 			break
 		}
-		name := string(tag[:i])
+		name := tag[:i]
 		tag = tag[i+1:]
 
 		// Scan quoted string to find value.
@@ -430,8 +436,8 @@ func parseTags(tag string) *code.FieldTags {
 		if i >= len(tag) {
 			break
 		}
-		qvalue := string(tag[:i+1])
-		value, err := strconv.Unquote(qvalue)
+		quotedValue := tag[:i+1]
+		value, err := strconv.Unquote(quotedValue)
 		if err != nil {
 			break
 		}
