@@ -209,11 +209,11 @@ func (s *Source) AnnotateStructureField(structure, field string, ann annotation.
 	return fmt.Errorf("field with name `%s` not found in structure `%s`", field, structure)
 }
 func (s *Source) AnnotateInterfaceMethod(inf, method string, ann annotation.Annotation) error {
-	intr, err := s.GetInterface(inf)
+	ifc, err := s.GetInterface(inf)
 	if err != nil {
 		return err
 	}
-	for _, m := range intr.Methods() {
+	for _, m := range ifc.Methods() {
 		if m.Name() == method {
 			return s.annotate(&m, ann)
 		}
