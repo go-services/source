@@ -262,7 +262,7 @@ func (s *Source) annotate(node Node, ann annotation.Annotation) error {
 
 func (s *Source) comment(node Node, comment string) error {
 	pre := s.file.src[:node.Begin()]
-	mid := comment + "\n"
+	mid := code.Comment(comment).String() + "\n"
 	end := s.file.src[node.Begin():]
 	s.file.src = fmt.Sprintf(
 		"%s%s%s",
