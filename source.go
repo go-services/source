@@ -221,6 +221,19 @@ func (s *Source) AnnotateInterfaceMethod(inf, method string, ann annotation.Anno
 	return fmt.Errorf("method with name `%s` not found in interface `%s`", method, inf)
 }
 
+func (s *Source) CommentInterfaceMethod(inf, method string, comment string) error {
+	ifc, err := s.GetInterface(inf)
+	if err != nil {
+		return err
+	}
+	for _, m := range ifc.Methods() {
+		if m.Name() == method {
+			return s.comment(&m, comment)
+		}
+	}
+	return fmt.Errorf("method with name `%s` not found in interface `%s`", method, inf)
+}
+
 func (s *Source) AnnotateInterface(name string, ann annotation.Annotation) error {
 	inf, err := s.GetInterface(name)
 	if err != nil {
@@ -232,6 +245,24 @@ func (s *Source) AnnotateInterface(name string, ann annotation.Annotation) error
 func (s *Source) annotate(node Node, ann annotation.Annotation) error {
 	pre := s.file.src[:node.Begin()]
 	mid := code.Comment(ann.String()).String() + "\n"
+	end := s.file.src[node.Begin():]
+	s.file.src = fmt.Sprintf(
+		"%s%s%s",
+		pre,
+		mid,
+		end,
+	)
+	f, err := s.parser.parse(s.file.src)
+	if err != nil {
+		return err
+	}
+	s.file = f
+	return nil
+}
+
+func (s *Source) comment(node Node, comment string) error {
+	pre := s.file.src[:node.Begin()]
+	mid := comment + "\n"
 	end := s.file.src[node.Begin():]
 	s.file.src = fmt.Sprintf(
 		"%s%s%s",
