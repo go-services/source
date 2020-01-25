@@ -234,6 +234,14 @@ func (s *Source) CommentInterfaceMethod(inf, method string, comment string) erro
 	return fmt.Errorf("method with name `%s` not found in interface `%s`", method, inf)
 }
 
+func (s *Source) CommentInterface(inf, comment string) error {
+	ifc, err := s.GetInterface(inf)
+	if err != nil {
+		return err
+	}
+	return s.comment(ifc, comment)
+}
+
 func (s *Source) AnnotateInterface(name string, ann annotation.Annotation) error {
 	inf, err := s.GetInterface(name)
 	if err != nil {

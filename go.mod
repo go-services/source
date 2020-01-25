@@ -8,3 +8,5 @@ require (
 	github.com/go-services/code v0.1.5
 	github.com/pkg/errors v0.8.1 // indirect
 )
+
+go 1.13
