@@ -58,6 +58,18 @@ func parseType(expr ast.Expr, imports []Import) code.Type {
 		tp.RawType = &jen.Statement{}
 		parseComplexType(expr, tp.RawType)
 		return tp
+	case *ast.MapType:
+		keyType := parseType(t.Key, imports)
+		valueType := parseType(t.Value, imports)
+		tp.MapType = &struct {
+			Key   code.Type
+			Value code.Type
+		}{
+			Key:   keyType,
+			Value: valueType,
+		}
+		parseComplexType(expr, tp.RawType)
+		return tp
 	default:
 		tp.RawType = &jen.Statement{}
 		parseComplexType(expr, tp.RawType)

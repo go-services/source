@@ -17,6 +17,8 @@ github.com/go-services/annotation v0.1.2 h1:YLQRhlSsKpKJbwo/6ZkyMWMXkW9EOEDG82au
 github.com/go-services/annotation v0.1.2/go.mod h1:AngxiDCuMgD4FRn/FdgfZM3ibfq4Mj0VwlVtEpjh31Q=
 github.com/go-services/code v0.1.5 h1:+ZoJ1Teh2jQJGOdwgjsAOgwD17/5qD71BXbA3gwY6xs=
 github.com/go-services/code v0.1.5/go.mod h1:fUERVBZCZwxv6RZin15z8TiNJ3x/Fj3LXdgx5emqSCo=
+github.com/go-services/code v0.1.6-0.20200202213709-754ae62cd245 h1:JQTQFORz+vPCFKHEeGxgN5AfHecoBUiXgEMfi1TKKU0=
+github.com/go-services/code v0.1.6-0.20200202213709-754ae62cd245/go.mod h1:fUERVBZCZwxv6RZin15z8TiNJ3x/Fj3LXdgx5emqSCo=
 github.com/mitchellh/mapstructure v1.1.2/go.mod h1:FVVH3fgwuzCH5S8UJGiWEs2h04kUh9fWfEaFds41c1Y=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.8.1 h1:iURUrRGxPUNPdy5/HRSm+Yj6okJ6UtLINN0Q9M4+h3I=
