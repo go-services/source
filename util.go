@@ -68,6 +68,7 @@ func parseType(expr ast.Expr, imports []Import) code.Type {
 			Key:   keyType,
 			Value: valueType,
 		}
+		tp.RawType = &jen.Statement{}
 		parseComplexType(expr, tp.RawType)
 		return tp
 	default:
