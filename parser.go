@@ -56,11 +56,13 @@ func (p *fileParser) parse(src string) (*file, error) {
 	for _, d := range p.ast.Decls {
 		switch p.getType(d) {
 		case token.STRUCT:
-			structure, err := p.parseStructure(d.(*ast.GenDecl))
+			structures, err := p.parseStructure(d.(*ast.GenDecl))
 			if err != nil {
 				return nil, err
 			}
-			p.file.structures[structure.Name()] = structure
+			for _, s := range structures {
+				p.file.structures[s.Name()] = s
+			}
 		case token.FUNC:
 			function, err := p.parseFunction(d.(*ast.FuncDecl))
 			if err != nil {
@@ -117,9 +119,7 @@ func (p *fileParser) isStructure(d ast.Decl) bool {
 	if !ok || gDecl.Tok != token.TYPE {
 		return false
 	}
-	if len(gDecl.Specs) != 1 {
-		return false
-	}
+
 	tp, ok := gDecl.Specs[0].(*ast.TypeSpec)
 	if !ok {
 		return false
@@ -183,7 +183,7 @@ func (p *fileParser) parseFunction(d *ast.FuncDecl) (Function, error) {
 	return fp.Parse(d)
 
 }
-func (p *fileParser) parseStructure(d *ast.GenDecl) (Structure, error) {
+func (p *fileParser) parseStructure(d *ast.GenDecl) ([]Structure, error) {
 	sp := &structParser{
 		imports: p.file.imports,
 	}
@@ -245,35 +245,43 @@ func (f *functionParser) Parse(d *ast.FuncDecl) (Function, error) {
 	}
 	return ft, ft.Annotate(false)
 }
-func (s *structParser) Parse(d *ast.GenDecl) (Structure, error) {
-	st := Structure{
-		ast:    d,
-		fields: []StructureField{},
-		begin:  int(d.Pos()) - 1,
-		end:    int(d.End()) - 1,
-	}
-
+func (s *structParser) Parse(d *ast.GenDecl) ([]Structure, error) {
+	var stcs []Structure
 	// we do not need to test this because it should never come to this point if
 	// the declaration is not a structure
 	// here we get the type so we have the name
-	tp := d.Specs[0].(*ast.TypeSpec)
+	for _, v := range d.Specs {
 
-	// get fields if any
-	fields := tp.Type.(*ast.StructType).Fields
-	if fields != nil {
-		st.innerBegin = int(fields.Opening)
-		st.innerEnd = int(fields.Closing) - 1
+		tp := v.(*ast.TypeSpec)
+		st := Structure{
+			ast:    d,
+			fields: []StructureField{},
+			begin:  int(tp.Pos()) - 1,
+			end:    int(tp.End()) - 1,
+		}
+		// get fields if any
+		fields := tp.Type.(*ast.StructType).Fields
+		if fields != nil {
+			st.innerBegin = int(fields.Opening)
+			st.innerEnd = int(fields.Closing) - 1
+		}
+		// create the code representation
+		sf, sfl := s.parseStructureFields(fields)
+		st.code = *code.NewStructWithFields(
+			tp.Name.Name,
+			sf,
+			parseComments(d.Doc)...,
+		)
+		st.exported = ast.IsExported(tp.Name.Name)
+		st.fields = sfl
+		err := st.Annotate(false)
+		if err != nil {
+			return nil, err
+		}
+		stcs = append(stcs, st)
 	}
-	// create the code representation
-	sf, sfl := s.parseStructureFields(fields)
-	st.code = *code.NewStructWithFields(
-		tp.Name.Name,
-		sf,
-		parseComments(d.Doc)...,
-	)
-	st.exported = ast.IsExported(tp.Name.Name)
-	st.fields = sfl
-	return st, st.Annotate(false)
+
+	return stcs, nil
 }
 func (i *interfaceParser) Parse(d *ast.GenDecl) (Interface, error) {
 	inf := Interface{
