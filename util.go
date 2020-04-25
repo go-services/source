@@ -10,10 +10,10 @@ import (
 	"github.com/go-services/code"
 )
 
-func parseType(expr ast.Expr, imports []Import) code.Type {
+func parseType(expr ast.Expr, imports []Import) *code.Type {
 	// try to find simple types that we can represent with code
 	// if not use RawType to still be able to print the type
-	tp := code.Type{}
+	tp := &code.Type{}
 	switch t := expr.(type) {
 	case *ast.Ident:
 		tp.Qualifier = t.Name
@@ -50,55 +50,98 @@ func parseType(expr ast.Expr, imports []Import) code.Type {
 		parseComplexType(expr, tp.RawType)
 		return tp
 	case *ast.ArrayType:
-		tp = parseType(t.Elt, imports)
-		if tp.RawType == nil {
+		innerType := parseType(t.Elt, imports)
+		if innerType.RawType == nil {
+			tp.PointerArrayType = innerType.Pointer
+			tp.Qualifier = innerType.Qualifier
+			tp.Import = innerType.Import
 			tp.ArrayType = true
 			return tp
 		}
-		tp.RawType = &jen.Statement{}
-		parseComplexType(expr, tp.RawType)
-		return tp
+		innerType.RawType = &jen.Statement{}
+		parseComplexType(expr, innerType.RawType)
+		return innerType
 	case *ast.MapType:
 		keyType := parseType(t.Key, imports)
 		valueType := parseType(t.Value, imports)
+		// not supported types
+		if keyType == nil {
+			return nil
+		}
+		if valueType == nil {
+			return nil
+		}
 		tp.MapType = &struct {
 			Key   code.Type
 			Value code.Type
 		}{
-			Key:   keyType,
-			Value: valueType,
+			Key:   *keyType,
+			Value: *valueType,
 		}
 		tp.RawType = &jen.Statement{}
 		parseComplexType(expr, tp.RawType)
 		return tp
-	default:
-		tp.RawType = &jen.Statement{}
-		parseComplexType(expr, tp.RawType)
+	case *ast.FuncType:
+		fp := &functionParser{
+			imports: imports,
+		}
+		fn, err := fp.Parse(&ast.FuncDecl{
+			Name: &ast.Ident{
+				Name: "_",
+			},
+			Type: t,
+		})
+		if err != nil {
+			// something could not be parsed
+			return nil
+		}
+		tp.Function = &code.FunctionType{
+			Params:  fn.Params(),
+			Results: fn.Results(),
+		}
 		return tp
+	default:
+		return nil
 	}
 }
-func parseComplexType(expr ast.Expr, statement *jen.Statement) {
+func parseComplexType(expr ast.Expr, statement *jen.Statement) bool {
 	switch t := expr.(type) {
 	case *ast.Ident:
 		statement.Id(t.Name)
+		return true
 	case *ast.StarExpr:
 		statement.Id("*")
-		parseComplexType(t.X, statement)
+		if !parseComplexType(t.X, statement) {
+			return false
+		}
+		return true
 	case *ast.SelectorExpr:
 		qual := &jen.Statement{}
-		parseComplexType(t.X, qual)
+		if !parseComplexType(t.X, qual) {
+			return false
+		}
 		statement.Add(qual).Dot(t.Sel.Name)
+		return true
 	case *ast.ArrayType:
 		qual := &jen.Statement{}
-		parseComplexType(t.Elt, qual)
+		if !parseComplexType(t.Elt, qual) {
+			return false
+		}
 		statement.Index().Add(qual)
+		return true
 	case *ast.MapType:
 		key := &jen.Statement{}
-		parseComplexType(t.Key, key)
+		if !parseComplexType(t.Key, key) {
+			return false
+		}
 		value := &jen.Statement{}
-		parseComplexType(t.Value, value)
+		if !parseComplexType(t.Value, value) {
+			return false
+		}
 		statement.Map(key).Add(value)
+		return true
 	}
+	return false
 }
 
 func cleanComment(comment string) string {

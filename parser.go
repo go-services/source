@@ -55,13 +55,10 @@ func (p *fileParser) parse(src string) (*file, error) {
 	// parse code nodes
 	for _, d := range p.ast.Decls {
 		switch p.getType(d) {
-		case token.STRUCT:
-			structures, err := p.parseStructure(d.(*ast.GenDecl))
+		case token.TYPE:
+			err := p.parseTypeSpec(d.(*ast.GenDecl))
 			if err != nil {
 				return nil, err
-			}
-			for _, s := range structures {
-				p.file.structures[s.Name()] = s
 			}
 		case token.FUNC:
 			function, err := p.parseFunction(d.(*ast.FuncDecl))
@@ -75,12 +72,6 @@ func (p *fileParser) parse(src string) (*file, error) {
 
 			// add the function
 			p.file.functions[function.Name()] = function
-		case token.INTERFACE:
-			ifc, err := p.parseInterface(d.(*ast.GenDecl))
-			if err != nil {
-				return nil, err
-			}
-			p.file.interfaces[ifc.Name()] = ifc
 		}
 	}
 	return p.file, nil
@@ -114,13 +105,15 @@ func (p *fileParser) parseImports() (imports []Import) {
 
 }
 
-func (p *fileParser) isStructure(d ast.Decl) bool {
+func (p *fileParser) isType(d ast.Decl) bool {
 	gDecl, ok := d.(*ast.GenDecl)
 	if !ok || gDecl.Tok != token.TYPE {
 		return false
 	}
-
-	tp, ok := gDecl.Specs[0].(*ast.TypeSpec)
+	return true
+}
+func (p *fileParser) isStructure(spec ast.Spec) bool {
+	tp, ok := spec.(*ast.TypeSpec)
 	if !ok {
 		return false
 	}
@@ -133,15 +126,8 @@ func (p *fileParser) isStructure(d ast.Decl) bool {
 	return true
 }
 
-func (p *fileParser) isInterface(d ast.Decl) bool {
-	gDecl, ok := d.(*ast.GenDecl)
-	if !ok || gDecl.Tok != token.TYPE {
-		return false
-	}
-	if len(gDecl.Specs) != 1 {
-		return false
-	}
-	tp, ok := gDecl.Specs[0].(*ast.TypeSpec)
+func (p *fileParser) isInterface(spec ast.Spec) bool {
+	tp, ok := spec.(*ast.TypeSpec)
 	if !ok {
 		return false
 	}
@@ -165,15 +151,36 @@ func (p *fileParser) isFunction(d ast.Decl) bool {
 	return true
 }
 
-func (p *fileParser) getType(d ast.Decl) token.Token {
-	if p.isStructure(d) {
-		return token.STRUCT
-	} else if p.isFunction(d) {
+func (p *fileParser) getType(spec ast.Decl) token.Token {
+	if p.isType(spec) {
+		return token.TYPE
+	} else if p.isFunction(spec) {
 		return token.FUNC
-	} else if p.isInterface(d) {
-		return token.INTERFACE
 	}
 	return token.ILLEGAL
+}
+
+func (p *fileParser) parseTypeSpec(d *ast.GenDecl) error {
+	for _, spec := range d.Specs {
+		tp := spec.(*ast.TypeSpec)
+		if len(d.Specs) == 1 {
+			tp.Doc = d.Doc
+		}
+		if p.isInterface(spec) {
+			ifc, err := p.parseInterface(tp)
+			if err != nil {
+				return err
+			}
+			p.file.interfaces[ifc.Name()] = ifc
+		} else if p.isStructure(spec) {
+			structures, err := p.parseStructure(tp)
+			if err != nil {
+				return err
+			}
+			p.file.structures[structures.Name()] = structures
+		}
+	}
+	return nil
 }
 
 func (p *fileParser) parseFunction(d *ast.FuncDecl) (Function, error) {
@@ -183,18 +190,18 @@ func (p *fileParser) parseFunction(d *ast.FuncDecl) (Function, error) {
 	return fp.Parse(d)
 
 }
-func (p *fileParser) parseStructure(d *ast.GenDecl) ([]Structure, error) {
+func (p *fileParser) parseStructure(spec *ast.TypeSpec) (Structure, error) {
 	sp := &structParser{
 		imports: p.file.imports,
 	}
-	return sp.Parse(d)
+	return sp.Parse(spec)
 }
 
-func (p *fileParser) parseInterface(d *ast.GenDecl) (Interface, error) {
+func (p *fileParser) parseInterface(spec *ast.TypeSpec) (Interface, error) {
 	ip := &interfaceParser{
 		imports: p.file.imports,
 	}
-	return ip.Parse(d)
+	return ip.Parse(spec)
 }
 
 func (f *functionParser) parseParams(params *ast.FieldList) []code.Parameter {
@@ -206,13 +213,19 @@ func (f *functionParser) parseParams(params *ast.FieldList) []code.Parameter {
 		if p == nil {
 			continue
 		}
+
+		tp := parseType(p.Type, f.imports)
+		if tp == nil {
+			// type not supported
+			continue
+		}
 		if len(p.Names) == 0 {
-			prm := code.NewParameter("", parseType(p.Type, f.imports))
+			prm := code.NewParameter("", *tp)
 			list = append(list, *prm)
 			continue
 		}
 		for _, n := range p.Names {
-			prm := code.NewParameter(n.Name, parseType(p.Type, f.imports))
+			prm := code.NewParameter(n.Name, *tp)
 			list = append(list, *prm)
 		}
 	}
@@ -245,55 +258,36 @@ func (f *functionParser) Parse(d *ast.FuncDecl) (Function, error) {
 	}
 	return ft, ft.Annotate(false)
 }
-func (s *structParser) Parse(d *ast.GenDecl) ([]Structure, error) {
-	var stcs []Structure
-	// we do not need to test this because it should never come to this point if
-	// the declaration is not a structure
-	// here we get the type so we have the name
-	for _, v := range d.Specs {
-
-		tp := v.(*ast.TypeSpec)
-		st := Structure{
-			ast:    d,
-			fields: []StructureField{},
-			begin:  int(tp.Pos()) - 1,
-			end:    int(tp.End()) - 1,
-		}
-		// get fields if any
-		fields := tp.Type.(*ast.StructType).Fields
-		if fields != nil {
-			st.innerBegin = int(fields.Opening)
-			st.innerEnd = int(fields.Closing) - 1
-		}
-		// create the code representation
-		sf, sfl := s.parseStructureFields(fields)
-		st.code = *code.NewStructWithFields(
-			tp.Name.Name,
-			sf,
-			parseComments(d.Doc)...,
-		)
-		st.exported = ast.IsExported(tp.Name.Name)
-		st.fields = sfl
-		err := st.Annotate(false)
-		if err != nil {
-			return nil, err
-		}
-		stcs = append(stcs, st)
+func (s *structParser) Parse(tp *ast.TypeSpec) (Structure, error) {
+	st := Structure{
+		ast:    tp,
+		fields: []StructureField{},
+		begin:  int(tp.Pos()) - 1,
+		end:    int(tp.End()) - 1,
 	}
-
-	return stcs, nil
+	// get fields if any
+	fields := tp.Type.(*ast.StructType).Fields
+	if fields != nil {
+		st.innerBegin = int(fields.Opening)
+		st.innerEnd = int(fields.Closing) - 1
+	}
+	// create the code representation
+	sf, sfl := s.parseStructureFields(fields)
+	st.code = *code.NewStructWithFields(
+		tp.Name.Name,
+		sf,
+		parseComments(tp.Doc)...,
+	)
+	st.exported = ast.IsExported(tp.Name.Name)
+	st.fields = sfl
+	return st, st.Annotate(false)
 }
-func (i *interfaceParser) Parse(d *ast.GenDecl) (Interface, error) {
+func (i *interfaceParser) Parse(tp *ast.TypeSpec) (Interface, error) {
 	inf := Interface{
-		ast:   d,
-		begin: int(d.Pos()) - 1,
-		end:   int(d.End()) - 1,
+		ast:   tp,
+		begin: int(tp.Pos()) - 1,
+		end:   int(tp.End()) - 1,
 	}
-
-	// we do not need to test this because it should never come to this point if
-	// the declaration is not a structure
-	// here we get the type so we have the name
-	tp := d.Specs[0].(*ast.TypeSpec)
 
 	// get fields if any
 	methods := tp.Type.(*ast.InterfaceType).Methods
@@ -306,7 +300,7 @@ func (i *interfaceParser) Parse(d *ast.GenDecl) (Interface, error) {
 	inf.code = *code.NewInterface(
 		tp.Name.Name,
 		im,
-		parseComments(d.Doc)...,
+		parseComments(tp.Doc)...,
 	)
 	inf.exported = ast.IsExported(tp.Name.Name)
 	inf.methods = ims
@@ -367,9 +361,13 @@ func (s *structParser) parseStructureFields(fields *ast.FieldList) ([]code.Struc
 		if f == nil {
 			continue
 		}
-
+		tp := parseType(f.Type, s.imports)
+		if tp == nil {
+			// type not supported
+			continue
+		}
 		if len(f.Names) == 0 {
-			sf := code.NewStructField("", parseType(f.Type, s.imports), parseComments(f.Doc)...)
+			sf := code.NewStructField("", *tp, parseComments(f.Doc)...)
 			if f.Tag != nil && f.Tag.Kind == token.STRING {
 				// remove ` before parsing
 				sf.Tags = parseTags(f.Tag.Value[1 : len(f.Tag.Value)-1])
@@ -385,7 +383,7 @@ func (s *structParser) parseStructureFields(fields *ast.FieldList) ([]code.Struc
 			continue
 		}
 		for _, n := range f.Names {
-			sf := code.NewStructField(n.Name, parseType(f.Type, s.imports), parseComments(f.Doc)...)
+			sf := code.NewStructField(n.Name, *tp, parseComments(f.Doc)...)
 			if f.Tag != nil && f.Tag.Kind == token.STRING {
 				// remove ` before parsing
 				sf.Tags = parseTags(f.Tag.Value[1 : len(f.Tag.Value)-1])

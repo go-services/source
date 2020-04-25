@@ -50,7 +50,7 @@ type StructureField struct {
 // Structure represents a parsed structure
 type Structure struct {
 	exported bool
-	ast      ast.Decl
+	ast      *ast.TypeSpec
 	// code representation of the struct
 	code code.Struct
 
@@ -85,7 +85,7 @@ type InterfaceMethod struct {
 // Interface represents a parsed interface
 type Interface struct {
 	exported bool
-	ast      ast.Decl
+	ast      *ast.TypeSpec
 
 	// code representation of the interface
 	code code.Interface
