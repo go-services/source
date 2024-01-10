@@ -52,10 +52,7 @@ func parseType(expr ast.Expr, imports []Import) *code.Type {
 	case *ast.ArrayType:
 		innerType := parseType(t.Elt, imports)
 		if innerType.RawType == nil {
-			tp.PointerArrayType = innerType.Pointer
-			tp.Qualifier = innerType.Qualifier
-			tp.Import = innerType.Import
-			tp.ArrayType = true
+			tp.ArrayType = innerType
 			return tp
 		}
 		innerType.RawType = &jen.Statement{}
