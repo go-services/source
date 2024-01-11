@@ -251,6 +251,7 @@ func (f *functionParser) Parse(d *ast.FuncDecl) (Function, error) {
 		code.ResultsFunctionOption(
 			f.parseParams(d.Type.Results)...,
 		),
+		code.DocsFunctionOption(parseComments(d.Doc)...),
 	)
 	ft.exported = ast.IsExported(d.Name.Name)
 	if d.Recv != nil && len(d.Recv.List) > 0 {
