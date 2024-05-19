@@ -1,6 +1,9 @@
 package source
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type Annotation struct {
 	Name string
@@ -8,7 +11,7 @@ type Annotation struct {
 }
 
 func (a Annotation) String() string {
-	return fmt.Sprintf("gs:%s %v", a.Name, a.Args)
+	return fmt.Sprintf("gs:%s %s", a.Name, strings.Join(a.Args, " ")
 }
 
 // Annotated is the interface all the annotated nodes need to satisfy
