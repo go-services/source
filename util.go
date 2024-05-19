@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/dave/jennifer/jen"
-	"github.com/go-services/annotation"
 	"github.com/go-services/code"
 )
 
@@ -161,15 +160,19 @@ func parseComments(docs *ast.CommentGroup) (dc []code.Comment) {
 	return
 }
 
-func annotate(c code.Code, force bool) ([]annotation.Annotation, error) {
-	var annotations []annotation.Annotation
+func annotate(c code.Code) ([]Annotation, error) {
+	var annotations []Annotation
 	for _, c := range c.Docs() {
-		a, err := annotation.Parse(cleanComment(c.String()))
-		if err != nil {
-			if force {
-				return nil, err
-			}
+		cleaned := cleanComment(c.String())
+		if !strings.HasPrefix(cleaned, "gs:") {
 			continue
+		}
+		parts := strings.Split(cleaned, " ")
+		name := strings.TrimPrefix(parts[0], "gs:")
+		args := parts[1:]
+		a := &Annotation{
+			Name: name,
+			Args: args,
 		}
 		annotations = append(annotations, *a)
 	}

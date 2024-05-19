@@ -3,19 +3,17 @@ package source
 import (
 	"reflect"
 	"testing"
-
-	"github.com/go-services/annotation"
 )
 
 type MockAnnotated struct {
-	annotations []annotation.Annotation
+	annotations []Annotation
 }
 
-func (m MockAnnotated) Annotate(force bool) error {
+func (m MockAnnotated) Annotate() error {
 	panic("implement me")
 }
 
-func (m MockAnnotated) Annotations() []annotation.Annotation {
+func (m MockAnnotated) Annotations() []Annotation {
 	return m.annotations
 }
 
@@ -27,14 +25,14 @@ func TestFindAnnotations(t *testing.T) {
 	tests := []struct {
 		name            string
 		args            args
-		wantAnnotations []annotation.Annotation
+		wantAnnotations []Annotation
 	}{
 		{
 			name: "Should return the test annotation",
 			args: args{
 				name: "test",
 				annotated: MockAnnotated{
-					annotations: []annotation.Annotation{
+					annotations: []Annotation{
 						{
 							Name: "abc",
 						},
@@ -44,7 +42,7 @@ func TestFindAnnotations(t *testing.T) {
 					},
 				},
 			},
-			wantAnnotations: []annotation.Annotation{
+			wantAnnotations: []Annotation{
 				{
 					Name: "test",
 				},

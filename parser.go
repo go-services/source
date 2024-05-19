@@ -257,7 +257,7 @@ func (f *functionParser) Parse(d *ast.FuncDecl) (Function, error) {
 	if d.Recv != nil && len(d.Recv.List) > 0 {
 		ft.code.Recv = &f.parseParams(d.Recv)[0]
 	}
-	return ft, ft.Annotate(false)
+	return ft, ft.Annotate()
 }
 func (s *structParser) Parse(tp *ast.TypeSpec) (Structure, error) {
 	st := Structure{
@@ -281,7 +281,7 @@ func (s *structParser) Parse(tp *ast.TypeSpec) (Structure, error) {
 	)
 	st.exported = ast.IsExported(tp.Name.Name)
 	st.fields = sfl
-	return st, st.Annotate(false)
+	return st, st.Annotate()
 }
 func (i *interfaceParser) Parse(tp *ast.TypeSpec) (Interface, error) {
 	inf := Interface{
@@ -305,7 +305,7 @@ func (i *interfaceParser) Parse(tp *ast.TypeSpec) (Interface, error) {
 	)
 	inf.exported = ast.IsExported(tp.Name.Name)
 	inf.methods = ims
-	return inf, inf.Annotate(false)
+	return inf, inf.Annotate()
 }
 func (i *interfaceParser) parseInterfaceMethods(methods *ast.FieldList) ([]code.InterfaceMethod, []InterfaceMethod) {
 	var list []code.InterfaceMethod
@@ -345,7 +345,7 @@ func (i *interfaceParser) parseInterfaceMethods(methods *ast.FieldList) ([]code.
 			}
 			ims.exported = ast.IsExported(n.Name)
 
-			_ = ims.Annotate(false)
+			_ = ims.Annotate()
 			list = append(list, im)
 			sList = append(sList, ims)
 		}
@@ -379,7 +379,7 @@ func (s *structParser) parseStructureFields(fields *ast.FieldList) ([]code.Struc
 				begin: int(f.Pos()) - 1,
 				end:   int(f.End()) - 1,
 			}
-			_ = stf.Annotate(false)
+			_ = stf.Annotate()
 			sList = append(sList, stf)
 			continue
 		}
@@ -396,7 +396,7 @@ func (s *structParser) parseStructureFields(fields *ast.FieldList) ([]code.Struc
 				end:   int(f.End()) - 1,
 			}
 			stf.exported = ast.IsExported(n.Name)
-			_ = stf.Annotate(false)
+			_ = stf.Annotate()
 			sList = append(sList, stf)
 		}
 	}

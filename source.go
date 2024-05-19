@@ -7,7 +7,6 @@ import (
 	"go/token"
 	"strings"
 
-	"github.com/go-services/annotation"
 	"github.com/go-services/code"
 )
 
@@ -180,7 +179,7 @@ func (s *Source) Functions() (functions []Function) {
 	return
 }
 
-func (s *Source) AnnotateFunction(name string, ann annotation.Annotation) error {
+func (s *Source) AnnotateFunction(name string, ann Annotation) error {
 	fn, err := s.GetFunction(name)
 	if err != nil {
 		return err
@@ -188,7 +187,7 @@ func (s *Source) AnnotateFunction(name string, ann annotation.Annotation) error 
 	return s.annotate(fn, ann)
 }
 
-func (s *Source) AnnotateStructure(name string, ann annotation.Annotation) error {
+func (s *Source) AnnotateStructure(name string, ann Annotation) error {
 	st, err := s.GetStructure(name)
 	if err != nil {
 		return err
@@ -196,7 +195,7 @@ func (s *Source) AnnotateStructure(name string, ann annotation.Annotation) error
 	return s.annotate(st, ann)
 }
 
-func (s *Source) AnnotateStructureField(structure, field string, ann annotation.Annotation) error {
+func (s *Source) AnnotateStructureField(structure, field string, ann Annotation) error {
 	st, err := s.GetStructure(structure)
 	if err != nil {
 		return err
@@ -208,7 +207,7 @@ func (s *Source) AnnotateStructureField(structure, field string, ann annotation.
 	}
 	return fmt.Errorf("field with name `%s` not found in structure `%s`", field, structure)
 }
-func (s *Source) AnnotateInterfaceMethod(inf, method string, ann annotation.Annotation) error {
+func (s *Source) AnnotateInterfaceMethod(inf, method string, ann Annotation) error {
 	ifc, err := s.GetInterface(inf)
 	if err != nil {
 		return err
@@ -242,7 +241,7 @@ func (s *Source) CommentInterface(inf, comment string) error {
 	return s.comment(ifc, comment)
 }
 
-func (s *Source) AnnotateInterface(name string, ann annotation.Annotation) error {
+func (s *Source) AnnotateInterface(name string, ann Annotation) error {
 	inf, err := s.GetInterface(name)
 	if err != nil {
 		return err
@@ -250,7 +249,7 @@ func (s *Source) AnnotateInterface(name string, ann annotation.Annotation) error
 	return s.annotate(inf, ann)
 }
 
-func (s *Source) annotate(node Node, ann annotation.Annotation) error {
+func (s *Source) annotate(node Node, ann Annotation) error {
 	pre := s.file.src[:node.Begin()]
 	mid := code.Comment(ann.String()).String() + "\n"
 	end := s.file.src[node.Begin():]

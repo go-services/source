@@ -3,7 +3,6 @@ package source
 import (
 	"go/ast"
 
-	"github.com/go-services/annotation"
 	"github.com/go-services/code"
 )
 
@@ -40,7 +39,7 @@ type StructureField struct {
 	code code.StructField
 
 	// annotations of the struct field
-	annotations []annotation.Annotation
+	annotations []Annotation
 
 	// the beginning and end positions of the struct field definition
 	// corresponds to the Pos() and End() of the ast declaration
@@ -58,7 +57,7 @@ type Structure struct {
 	fields []StructureField
 
 	// annotations of the struct
-	annotations []annotation.Annotation
+	annotations []Annotation
 
 	// the beginning and end positions of the struct definition
 	// corresponds to the Pos() and End() of the ast declaration
@@ -75,7 +74,7 @@ type InterfaceMethod struct {
 	code code.InterfaceMethod
 
 	// annotations of the interface method
-	annotations []annotation.Annotation
+	annotations []Annotation
 
 	// the beginning and end positions of the interface method definition
 	// corresponds to the Pos() and End() of the ast declaration
@@ -94,7 +93,7 @@ type Interface struct {
 	methods []InterfaceMethod
 
 	// annotations of the interface
-	annotations []annotation.Annotation
+	annotations []Annotation
 
 	// the beginning and end positions of the interface definition
 	// corresponds to the Pos() and End() of the ast declaration
@@ -113,7 +112,7 @@ type Function struct {
 	code code.Function
 
 	// annotations of the interface
-	annotations []annotation.Annotation
+	annotations []Annotation
 
 	// the beginning and end positions of the function definition
 	// corresponds to the Pos() and End() of the ast declaration
@@ -186,12 +185,12 @@ func (s Structure) Fields() []StructureField {
 	return s.fields
 }
 
-func (s Structure) Annotations() []annotation.Annotation {
+func (s Structure) Annotations() []Annotation {
 	return s.annotations
 }
 
-func (s *Structure) Annotate(force bool) error {
-	a, err := annotate(&s.code, force)
+func (s *Structure) Annotate() error {
+	a, err := annotate(&s.code)
 	s.annotations = append(s.annotations, a...)
 	return err
 }
@@ -235,12 +234,12 @@ func (i Interface) Methods() []InterfaceMethod {
 	return i.methods
 }
 
-func (i Interface) Annotations() []annotation.Annotation {
+func (i Interface) Annotations() []Annotation {
 	return i.annotations
 }
 
-func (i *Interface) Annotate(force bool) error {
-	a, err := annotate(&i.code, force)
+func (i *Interface) Annotate() error {
+	a, err := annotate(&i.code)
 	i.annotations = append(i.annotations, a...)
 	return err
 }
@@ -300,12 +299,12 @@ func (f Function) Receiver() *code.Parameter {
 	return f.code.Recv
 }
 
-func (f Function) Annotations() []annotation.Annotation {
+func (f Function) Annotations() []Annotation {
 	return f.annotations
 }
 
-func (f *Function) Annotate(force bool) error {
-	a, err := annotate(&f.code, force)
+func (f *Function) Annotate() error {
+	a, err := annotate(&f.code)
 	f.annotations = append(f.annotations, a...)
 	return err
 }
@@ -339,12 +338,12 @@ func (f StructureField) Begin() int {
 func (f StructureField) End() int {
 	return f.end
 }
-func (f StructureField) Annotations() []annotation.Annotation {
+func (f StructureField) Annotations() []Annotation {
 	return f.annotations
 }
 
-func (f *StructureField) Annotate(force bool) error {
-	a, err := annotate(&f.code, force)
+func (f *StructureField) Annotate() error {
+	a, err := annotate(&f.code)
 	f.annotations = append(f.annotations, a...)
 	return err
 }
@@ -375,12 +374,12 @@ func (f InterfaceMethod) Results() []code.Parameter {
 	return f.code.Results
 }
 
-func (f InterfaceMethod) Annotations() []annotation.Annotation {
+func (f InterfaceMethod) Annotations() []Annotation {
 	return f.annotations
 }
 
-func (f *InterfaceMethod) Annotate(force bool) error {
-	a, err := annotate(&f.code, force)
+func (f *InterfaceMethod) Annotate() error {
+	a, err := annotate(&f.code)
 	f.annotations = append(f.annotations, a...)
 	return err
 }
