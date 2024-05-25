@@ -2,11 +2,8 @@ package source
 
 import (
 	"go/ast"
-	"go/build"
 	"go/parser"
 	"go/token"
-	"log"
-	"os"
 	"strconv"
 	"strings"
 
@@ -14,9 +11,22 @@ import (
 	"github.com/go-services/code"
 )
 
+type Options struct {
+	buildContext BuildContext
+}
+
+type Option func(*Options)
+
+func WithBuildContext(buildContext BuildContext) Option {
+	return func(o *Options) {
+		o.buildContext = buildContext
+	}
+}
+
 type fileParser struct {
-	ast  *ast.File
-	file *file
+	ast          *ast.File
+	file         *file
+	buildContext BuildContext
 }
 type structParser struct {
 	imports []Import
@@ -28,8 +38,16 @@ type interfaceParser struct {
 	imports []Import
 }
 
-func newParser() *fileParser {
-	return &fileParser{}
+func newParser(opts ...Option) *fileParser {
+	options := Options{
+		buildContext: DefaultBuildContext{},
+	}
+	for _, o := range opts {
+		o(&options)
+	}
+	return &fileParser{
+		buildContext: options.buildContext,
+	}
 }
 
 func (p *fileParser) parse(src string) (*file, error) {
@@ -91,11 +109,7 @@ func (p *fileParser) parseImports() (imports []Import) {
 		if err == nil {
 			imp.code.Path = pth
 		}
-		dir, err := os.Getwd()
-		if err != nil {
-			log.Fatal(err)
-		}
-		pkg, err := build.Import(imp.code.Path, dir, 0)
+		pkg, err := p.buildContext.Import(imp.code.Path)
 		if err == nil {
 			imp.code.FilePath = pkg.Dir
 			imp.pkg = pkg.Name

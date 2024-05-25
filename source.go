@@ -11,12 +11,13 @@ import (
 )
 
 type Source struct {
-	file   *file
-	parser *fileParser
+	file          *file
+	parser        *fileParser
+	parserOptions *Options
 }
 
-func New(src string) (*Source, error) {
-	p := newParser()
+func New(src string, opts ...Option) (*Source, error) {
+	p := newParser(opts...)
 	f, err := p.parse(src)
 	if err != nil {
 		return nil, err
