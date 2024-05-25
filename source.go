@@ -30,6 +30,7 @@ func New(src string) (*Source, error) {
 func (s *Source) Package() string {
 	return s.file.pkg
 }
+
 func (s *Source) Imports() []Import {
 	return s.file.imports
 }
@@ -98,7 +99,6 @@ func (s *Source) AppendParameterToFunction(name string, param *code.Parameter) e
 	end := s.file.src[fn.ParamEnd():]
 	s.file.src = fmt.Sprintf("%s%s%s", pre, mid, end)
 	return s.parseAgain()
-
 }
 
 func (s *Source) AppendCodeToFunction(name string, method *code.RawCode) error {
@@ -179,47 +179,6 @@ func (s *Source) Functions() (functions []Function) {
 	return
 }
 
-func (s *Source) AnnotateFunction(name string, ann Annotation) error {
-	fn, err := s.GetFunction(name)
-	if err != nil {
-		return err
-	}
-	return s.annotate(fn, ann)
-}
-
-func (s *Source) AnnotateStructure(name string, ann Annotation) error {
-	st, err := s.GetStructure(name)
-	if err != nil {
-		return err
-	}
-	return s.annotate(st, ann)
-}
-
-func (s *Source) AnnotateStructureField(structure, field string, ann Annotation) error {
-	st, err := s.GetStructure(structure)
-	if err != nil {
-		return err
-	}
-	for _, f := range st.Fields() {
-		if f.Name() == field {
-			return s.annotate(&f, ann)
-		}
-	}
-	return fmt.Errorf("field with name `%s` not found in structure `%s`", field, structure)
-}
-func (s *Source) AnnotateInterfaceMethod(inf, method string, ann Annotation) error {
-	ifc, err := s.GetInterface(inf)
-	if err != nil {
-		return err
-	}
-	for _, m := range ifc.Methods() {
-		if m.Name() == method {
-			return s.annotate(&m, ann)
-		}
-	}
-	return fmt.Errorf("method with name `%s` not found in interface `%s`", method, inf)
-}
-
 func (s *Source) CommentInterfaceMethod(inf, method string, comment string) error {
 	ifc, err := s.GetInterface(inf)
 	if err != nil {
@@ -239,32 +198,6 @@ func (s *Source) CommentInterface(inf, comment string) error {
 		return err
 	}
 	return s.comment(ifc, comment)
-}
-
-func (s *Source) AnnotateInterface(name string, ann Annotation) error {
-	inf, err := s.GetInterface(name)
-	if err != nil {
-		return err
-	}
-	return s.annotate(inf, ann)
-}
-
-func (s *Source) annotate(node Node, ann Annotation) error {
-	pre := s.file.src[:node.Begin()]
-	mid := code.Comment(ann.String()).String() + "\n"
-	end := s.file.src[node.Begin():]
-	s.file.src = fmt.Sprintf(
-		"%s%s%s",
-		pre,
-		mid,
-		end,
-	)
-	f, err := s.parser.parse(s.file.src)
-	if err != nil {
-		return err
-	}
-	s.file = f
-	return nil
 }
 
 func (s *Source) comment(node Node, comment string) error {

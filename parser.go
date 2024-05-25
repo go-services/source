@@ -76,6 +76,7 @@ func (p *fileParser) parse(src string) (*file, error) {
 	}
 	return p.file, nil
 }
+
 func (p *fileParser) parseImports() (imports []Import) {
 	// find imports
 	for _, i := range p.ast.Imports {
@@ -102,7 +103,6 @@ func (p *fileParser) parseImports() (imports []Import) {
 		imports = append(imports, imp)
 	}
 	return imports
-
 }
 
 func (p *fileParser) isType(d ast.Decl) bool {
@@ -112,6 +112,7 @@ func (p *fileParser) isType(d ast.Decl) bool {
 	}
 	return true
 }
+
 func (p *fileParser) isStructure(spec ast.Spec) bool {
 	tp, ok := spec.(*ast.TypeSpec)
 	if !ok {
@@ -188,8 +189,8 @@ func (p *fileParser) parseFunction(d *ast.FuncDecl) (Function, error) {
 		imports: p.file.imports,
 	}
 	return fp.Parse(d)
-
 }
+
 func (p *fileParser) parseStructure(spec *ast.TypeSpec) (Structure, error) {
 	sp := &structParser{
 		imports: p.file.imports,
@@ -231,6 +232,7 @@ func (f *functionParser) parseParams(params *ast.FieldList) []code.Parameter {
 	}
 	return list
 }
+
 func (f *functionParser) Parse(d *ast.FuncDecl) (Function, error) {
 	ft := Function{
 		ast:   d,
@@ -257,8 +259,9 @@ func (f *functionParser) Parse(d *ast.FuncDecl) (Function, error) {
 	if d.Recv != nil && len(d.Recv.List) > 0 {
 		ft.code.Recv = &f.parseParams(d.Recv)[0]
 	}
-	return ft, ft.Annotate()
+	return ft, nil
 }
+
 func (s *structParser) Parse(tp *ast.TypeSpec) (Structure, error) {
 	st := Structure{
 		ast:    tp,
@@ -281,8 +284,9 @@ func (s *structParser) Parse(tp *ast.TypeSpec) (Structure, error) {
 	)
 	st.exported = ast.IsExported(tp.Name.Name)
 	st.fields = sfl
-	return st, st.Annotate()
+	return st, nil
 }
+
 func (i *interfaceParser) Parse(tp *ast.TypeSpec) (Interface, error) {
 	inf := Interface{
 		ast:   tp,
@@ -305,8 +309,9 @@ func (i *interfaceParser) Parse(tp *ast.TypeSpec) (Interface, error) {
 	)
 	inf.exported = ast.IsExported(tp.Name.Name)
 	inf.methods = ims
-	return inf, inf.Annotate()
+	return inf, nil
 }
+
 func (i *interfaceParser) parseInterfaceMethods(methods *ast.FieldList) ([]code.InterfaceMethod, []InterfaceMethod) {
 	var list []code.InterfaceMethod
 	var sList []InterfaceMethod
@@ -345,13 +350,13 @@ func (i *interfaceParser) parseInterfaceMethods(methods *ast.FieldList) ([]code.
 			}
 			ims.exported = ast.IsExported(n.Name)
 
-			_ = ims.Annotate()
 			list = append(list, im)
 			sList = append(sList, ims)
 		}
 	}
 	return list, sList
 }
+
 func (s *structParser) parseStructureFields(fields *ast.FieldList) ([]code.StructField, []StructureField) {
 	var list []code.StructField
 	var sList []StructureField
@@ -379,7 +384,6 @@ func (s *structParser) parseStructureFields(fields *ast.FieldList) ([]code.Struc
 				begin: int(f.Pos()) - 1,
 				end:   int(f.End()) - 1,
 			}
-			_ = stf.Annotate()
 			sList = append(sList, stf)
 			continue
 		}
@@ -396,12 +400,10 @@ func (s *structParser) parseStructureFields(fields *ast.FieldList) ([]code.Struc
 				end:   int(f.End()) - 1,
 			}
 			stf.exported = ast.IsExported(n.Name)
-			_ = stf.Annotate()
 			sList = append(sList, stf)
 		}
 	}
 	return list, sList
-
 }
 
 // this is copied and modified from https://golang.org/src/reflect/type.go?s=31821:31842#L1174

@@ -38,9 +38,6 @@ type StructureField struct {
 	// code representation of the struct field
 	code code.StructField
 
-	// annotations of the struct field
-	annotations []Annotation
-
 	// the beginning and end positions of the struct field definition
 	// corresponds to the Pos() and End() of the ast declaration
 	begin, end int
@@ -56,9 +53,6 @@ type Structure struct {
 	// the structure fields
 	fields []StructureField
 
-	// annotations of the struct
-	annotations []Annotation
-
 	// the beginning and end positions of the struct definition
 	// corresponds to the Pos() and End() of the ast declaration
 	begin, end int
@@ -72,9 +66,6 @@ type InterfaceMethod struct {
 	exported bool
 	// code representation of the interface method
 	code code.InterfaceMethod
-
-	// annotations of the interface method
-	annotations []Annotation
 
 	// the beginning and end positions of the interface method definition
 	// corresponds to the Pos() and End() of the ast declaration
@@ -92,9 +83,6 @@ type Interface struct {
 	// the interface methods
 	methods []InterfaceMethod
 
-	// annotations of the interface
-	annotations []Annotation
-
 	// the beginning and end positions of the interface definition
 	// corresponds to the Pos() and End() of the ast declaration
 	begin, end int
@@ -110,9 +98,6 @@ type Function struct {
 
 	// code representation of the function
 	code code.Function
-
-	// annotations of the interface
-	annotations []Annotation
 
 	// the beginning and end positions of the function definition
 	// corresponds to the Pos() and End() of the ast declaration
@@ -150,6 +135,7 @@ func newFile(pkg, src string, ast *ast.File) *file {
 		functions:  map[string]Function{},
 	}
 }
+
 func (s Structure) Name() string {
 	return s.code.Name
 }
@@ -181,19 +167,11 @@ func (s Structure) Struct() *code.Struct {
 func (s Structure) String() string {
 	return s.code.String()
 }
+
 func (s Structure) Fields() []StructureField {
 	return s.fields
 }
 
-func (s Structure) Annotations() []Annotation {
-	return s.annotations
-}
-
-func (s *Structure) Annotate() error {
-	a, err := annotate(&s.code)
-	s.annotations = append(s.annotations, a...)
-	return err
-}
 func (s Structure) Exported() bool {
 	return s.exported
 }
@@ -234,15 +212,6 @@ func (i Interface) Methods() []InterfaceMethod {
 	return i.methods
 }
 
-func (i Interface) Annotations() []Annotation {
-	return i.annotations
-}
-
-func (i *Interface) Annotate() error {
-	a, err := annotate(&i.code)
-	i.annotations = append(i.annotations, a...)
-	return err
-}
 func (i Interface) Exported() bool {
 	return i.exported
 }
@@ -299,15 +268,6 @@ func (f Function) Receiver() *code.Parameter {
 	return f.code.Recv
 }
 
-func (f Function) Annotations() []Annotation {
-	return f.annotations
-}
-
-func (f *Function) Annotate() error {
-	a, err := annotate(&f.code)
-	f.annotations = append(f.annotations, a...)
-	return err
-}
 func (f Function) Exported() bool {
 	return f.exported
 }
@@ -327,6 +287,7 @@ func (f StructureField) Code() code.Code {
 func (f StructureField) Field() code.StructField {
 	return f.code
 }
+
 func (f StructureField) Tags() map[string]string {
 	return *f.code.Tags
 }
@@ -338,15 +299,7 @@ func (f StructureField) Begin() int {
 func (f StructureField) End() int {
 	return f.end
 }
-func (f StructureField) Annotations() []Annotation {
-	return f.annotations
-}
 
-func (f *StructureField) Annotate() error {
-	a, err := annotate(&f.code)
-	f.annotations = append(f.annotations, a...)
-	return err
-}
 func (f StructureField) Exported() bool {
 	return f.exported
 }
@@ -354,6 +307,7 @@ func (f StructureField) Exported() bool {
 func (f InterfaceMethod) Name() string {
 	return f.code.Name
 }
+
 func (f InterfaceMethod) String() string {
 	return f.code.String()
 }
@@ -374,16 +328,6 @@ func (f InterfaceMethod) Results() []code.Parameter {
 	return f.code.Results
 }
 
-func (f InterfaceMethod) Annotations() []Annotation {
-	return f.annotations
-}
-
-func (f *InterfaceMethod) Annotate() error {
-	a, err := annotate(&f.code)
-	f.annotations = append(f.annotations, a...)
-	return err
-}
-
 func (f InterfaceMethod) Begin() int {
 	return f.begin
 }
@@ -391,6 +335,7 @@ func (f InterfaceMethod) Begin() int {
 func (f InterfaceMethod) End() int {
 	return f.end
 }
+
 func (f InterfaceMethod) Exported() bool {
 	return f.exported
 }

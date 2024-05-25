@@ -100,6 +100,7 @@ func parseType(expr ast.Expr, imports []Import) *code.Type {
 		return nil
 	}
 }
+
 func parseComplexType(expr ast.Expr, statement *jen.Statement) bool {
 	switch t := expr.(type) {
 	case *ast.Ident:
@@ -147,6 +148,7 @@ func cleanComment(comment string) string {
 	comment = strings.TrimSpace(comment)
 	return comment
 }
+
 func parseComments(docs *ast.CommentGroup) (dc []code.Comment) {
 	if docs == nil {
 		return dc
@@ -158,25 +160,6 @@ func parseComments(docs *ast.CommentGroup) (dc []code.Comment) {
 		dc = append(dc, code.NewComment(cleanComment(c.Text)))
 	}
 	return
-}
-
-func annotate(c code.Code) ([]Annotation, error) {
-	var annotations []Annotation
-	for _, c := range c.Docs() {
-		cleaned := cleanComment(c.String())
-		if !strings.HasPrefix(cleaned, "gs:") {
-			continue
-		}
-		parts := strings.Split(cleaned, " ")
-		name := strings.TrimPrefix(parts[0], "gs:")
-		args := parts[1:]
-		a := &Annotation{
-			Name: name,
-			Args: args,
-		}
-		annotations = append(annotations, *a)
-	}
-	return annotations, nil
 }
 
 // this is used to add code to the body of a code node.
